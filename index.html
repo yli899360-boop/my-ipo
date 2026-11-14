@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>大山微信耍帅版</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // App 容器会在 UserAgent 末尾追加 SimulatorApp 标识，命中即启用全屏布局
+        if (/SimulatorApp/.test(navigator.userAgent)) {
+            document.documentElement.classList.add('in-app');
+        }
+    </script>
+</head>
+<body>
+
+<div style="display: flex; flex-direction: column; align-items: center;">
+    <div class="phone">
+        <!-- 1. 真实状态栏 -->
+        <div class="status-bar">
+            <span class="status-bar-time" id="displayTime" onclick="changeTime()">00:00</span>
+            <div class="battery-area" onclick="changeBattery()">
+                <div class="signal-bars">
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                    <div class="signal-bar"></div>
+                </div>
+                <span class="network-type">5G</span>
+                <div class="ios-battery-pill" id="batteryPill">
+                    <div class="ios-battery-fill" id="batteryFill" style="width: 23%;"></div>
+                    <span class="ios-battery-num" id="displayBattery">23</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 导航栏 -->
+        <div class="nav-bar">
+            <div class="nav-left">
+                <div class="back-arrow"></div>
+            </div>
+            <div class="nav-title" id="chatTitle" onclick="changeTitle()" title="点击修改聊天名字">282</div>
+            <div class="nav-more">
+                <div class="nav-more-dot"></div>
+                <div class="nav-more-dot"></div>
+                <div class="nav-more-dot"></div>
+            </div>
+        </div>
+
+        <!-- 3. 聊天内容区域 -->
+        <div class="chat-body" id="chatBody" onclick="hideActionMenu()">
+            <!-- 单击气泡弹出的菜单 -->
+            <div class="chat-action-menu" id="actionMenu">
+                <ul>
+                    <li onclick="deleteCurrentRow()">删除</li>
+                </ul>
+            </div>
+
+            <div class="msg-row right" onclick="onRowClick(event, this)">
+                <div class="avatar right-avatar" style="background-color: #2c2c2c;" onclick="triggerAvatarUpload('right')" title="点击更换我的头像">我</div>
+                <div class="bubble-wrapper">
+                    <div class="bubble">小丽</div>
+                </div>
+            </div>
+
+            <div class="msg-row left" onclick="onRowClick(event, this)">
+                <div class="avatar left-avatar" style="background-color: #507090;" onclick="triggerAvatarUpload('left')" title="点击更换对方头像">客</div>
+                <div class="bubble-wrapper">
+                    <div class="bubble">😳</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 表情包选择面板：微信经典表情由 JS 动态渲染，支持自定义添加 -->
+        <div class="emoji-panel" id="emojiPanel">
+            <div class="emoji-grid" id="emojiGrid">
+                <div class="custom-emoji-add" onclick="triggerCustomEmojiUpload()" title="添加自定义表情包">➕</div>
+            </div>
+        </div>
+
+        <!-- 4. 底部输入栏（左侧语音，右侧笑脸） -->
+        <div class="input-bar">
+            <!-- 左侧语音按钮 -->
+            <div class="icon-btn" onclick="voiceInput()" title="语音输入（模拟）">
+                <img class="icon-img" src="data:image/png;base64,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" alt="表情面板">
+            </div>
+
+            <textarea class="input-box" id="msgInput" rows="1" oninput="handleInput()" onfocus="onInputFocus()" onkeydown="handleKeyDown(event)"></textarea>
+
+            <!-- 右侧笑脸按钮（控制表情包面板） -->
+            <div class="icon-btn" onclick="toggleEmojiPanel()" title="表情面板">
+                <img class="icon-img" src="data:image/png;base64,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" alt="语音">
+            </div>
+
+            <div class="icon-btn" id="plusBtn" onclick="toggleMorePanel()">
+                <img class="icon-img" src="data:image/png;base64,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" alt="加号">
+            </div>
+            <div class="send-btn" id="sendBtn" onclick="sendMsg()">发送</div>
+        </div>
+
+        <!-- 5. 原生极简黑白图标拓展面板 -->
+        <div class="more-panel" id="morePanel">
+            <div class="panel-grid">
+                <!-- 照片 -->
+                <div class="panel-item" onclick="triggerImageUpload()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                    </div>
+                    <span class="panel-label">照片</span>
+                </div>
+                <!-- 拍摄 -->
+                <div class="panel-item" onclick="triggerCameraUpload()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+                    </div>
+                    <span class="panel-label">拍摄</span>
+                </div>
+                <!-- 视频通话 -->
+                <div class="panel-item" onclick="simulateVideoCall()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                    </div>
+                    <span class="panel-label">视频通话</span>
+                </div>
+                <!-- 位置 -->
+                <div class="panel-item" onclick="sendLocation()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </div>
+                    <span class="panel-label">位置</span>
+                </div>
+                <!-- 红包 -->
+                <div class="panel-item" onclick="sendRedPacket()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 4l-7 4-7-4V5l7 4 7-4v2z"/></svg>
+                    </div>
+                    <span class="panel-label">红包</span>
+                </div>
+                <!-- 礼物 -->
+                <div class="panel-item" onclick="sendGift()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.11-.9-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4V8h5.08L7 10.83l1.41 1.41L12 8.66l3.59 3.58L17 10.83 14.92 8H20v11z"/></svg>
+                    </div>
+                    <span class="panel-label">礼物</span>
+                </div>
+                <!-- 转账 -->
+                <div class="panel-item" onclick="sendTransfer()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+                    </div>
+                    <span class="panel-label">转账</span>
+                </div>
+                <!-- 语音输入 -->
+                <div class="panel-item" onclick="voiceInput()">
+                    <div class="panel-icon-box">
+                        <svg class="panel-icon-svg" viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+                    </div>
+                    <span class="panel-label">语音输入</span>
+                </div>
+            </div>
+            <div class="panel-dots">
+                <div class="panel-dot active"></div>
+                <div class="panel-dot"></div>
+            </div>
+        </div>
+
+        <!-- HomeBar 横条 -->
+        <div class="home-bar">
+            <div class="home-bar-line"></div>
+        </div>
+
+        <!-- 自定义中文弹窗（放在最外层，不会被聊天内容覆盖） -->
+        <div class="custom-dialog-mask" id="customDialogMask">
+            <div class="custom-dialog">
+                <div class="custom-dialog-title" id="customDialogTitle"></div>
+                <input type="text" class="custom-dialog-input" id="customDialogInput" style="display:none;">
+                <div class="custom-dialog-buttons">
+                    <button class="custom-dialog-btn" id="customDialogCancelBtn"></button>
+                    <button class="custom-dialog-btn primary" id="customDialogOkBtn"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 点击聊天时间弹出的操作弹窗 -->
+        <div class="custom-dialog-mask" id="timeDialogMask">
+            <div class="custom-dialog">
+                <div class="custom-dialog-title" id="timeDialogTitle"></div>
+                <div class="custom-dialog-buttons">
+                    <button class="custom-dialog-btn" onclick="closeTimeDialog()">取消</button>
+                    <button class="custom-dialog-btn" onclick="deleteSelectedTime()">删除时间</button>
+                    <button class="custom-dialog-btn primary" onclick="editSelectedTime()">编辑时间</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部控制面板 -->
+    <div class="controls">
+        <div class="control-row">
+            <span><b>发送身份：</b></span>
+            <div>
+                <button class="btn" id="roleBtnRight" onclick="setRole('right')">我 (右侧)</button>
+                <button class="btn btn-secondary" id="roleBtnLeft" onclick="setRole('left')">对方 (左侧)</button>
+            </div>
+        </div>
+        <div class="control-row">
+            <button class="btn" onclick="insertChatTime()">插入聊天时间</button>
+            <button class="btn" onclick="changeTime()">手动改时间</button>
+            <button class="btn" onclick="changeBattery()">修改电量</button>
+            <button class="btn btn-danger" onclick="clearAll()">清空屏幕</button>
+        </div>
+        <div style="font-size: 11px; color: #888; text-align: center; margin-top: 4px;">
+            提示：单击任意聊天消息可弹出删除按钮
+        </div>
+    </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*">
+<input type="file" id="cameraInput" accept="image/*" capture="environment">
+<input type="file" id="avatarFileInput" accept="image/*">
+<input type="file" id="customEmojiInput" accept="image/*">
+
+
+<script src="js/emojis.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
